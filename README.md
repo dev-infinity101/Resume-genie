@@ -1,4 +1,4 @@
-# Resume Genie MVP 🧞‍♂️
+# Resume Genie 🧞‍♂️
 
 AI-powered resume enhancement tool that transforms any resume into a professional, ATS-optimized document in minutes. No signup required, privacy-focused, session-based processing.
 
