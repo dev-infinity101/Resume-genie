@@ -1,245 +1,396 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, Upload, Target, Download, CheckCircle, FileText, Briefcase, Award } from 'lucide-react'
-import FileUpload from '@/components/FileUpload'
-import ResumePreview from '@/components/ResumePreview'
-import JobMatcher from '@/components/JobMatcher'
-import { apiClient, ResumeData } from '@/lib/api'
+import { UploadCloud, FileText, CheckCircle, Loader2, Sparkles, Target, Briefcase } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
+import { Progress } from '@/components/ui/progress'
+import { apiClient, type ResumeData } from '@/lib/api'
+import ResumePreview from '@/components/ResumePreview'
+import JobMatcher from '@/components/JobMatcher'
 
-type Step = 'upload' | 'polish' | 'match' | 'complete'
-
-interface ResumeUploadData {
-  filename: string
-  text_preview: string
-  full_text: string
-  character_count: number
-}
+type Step = 'upload' | 'polish' | 'preview' | 'job_match' | 'download'
 
 export default function HomePage() {
   const [currentStep, setCurrentStep] = useState<Step>('upload')
-  const [isLoading, setIsLoading] = useState(false)
-  const [uploadData, setUploadData] = useState<ResumeUploadData | null>(null)
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [extractedText, setExtractedText] = useState<string>('')
   const [polishedContent, setPolishedContent] = useState<ResumeData | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null)
 
-  const handleUploadSuccess = (data: ResumeUploadData) => {
-    setUploadData(data)
-    setCurrentStep('polish')
-  }
-
-  const handlePolish = async () => {
-    if (!uploadData) return
-
-    setIsLoading(true)
+  const handleFileUpload = async (file: File) => {
+    setIsUploading(true)
+    setUploadProgress(0);
+    setError(null)
+    
     try {
-      const result = await apiClient.polishResume(uploadData.full_text)
-      setPolishedContent(result.polished_content)
-    } catch (error) {
-      console.error('Polish failed:', error)
-      throw error
+      const formData = new FormData()
+      formData.append('file', file)
+
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 10;
+        if (progress <= 90) {
+          setUploadProgress(progress);
+        } else {
+          clearInterval(interval);
+        }
+      }, 200);
+      
+      const response = await fetch('http://localhost:8000/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+      
+      clearInterval(interval);
+      setUploadProgress(100);
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.detail || 'Upload failed')
+      }
+      
+      const data = await response.json()
+      setUploadedFile(file)
+      setExtractedText(data.full_text)
+      setCurrentStep('polish')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed')
+      setUploadProgress(0);
     } finally {
-      setIsLoading(false)
+      setIsUploading(false)
     }
   }
 
-  const handleNextToMatching = () => {
-    setCurrentStep('match')
+  const handlePolishResume = async () => {
+    if (!extractedText) return
+    
+    setIsProcessing(true)
+    setError(null)
+    
+    try {
+      const response = await fetch('http://localhost:8000/api/polish', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: extractedText }),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.detail || 'Polish failed')
+      }
+      
+      const data = await response.json()
+      setPolishedContent(data.polished_content)
+      setCurrentStep('preview')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Polish failed')
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
-  const handleComplete = () => {
-    setCurrentStep('complete')
+  const handleNextToJobMatch = () => {
+    setCurrentStep('job_match')
   }
 
-  const resetFlow = () => {
-    setCurrentStep('upload')
-    setUploadData(null)
+  const handleBackToUpload = () => {
+    setUploadedFile(null)
+    setExtractedText('')
     setPolishedContent(null)
-    setIsLoading(false)
+    setCurrentStep('upload')
+    setError(null)
   }
 
-  const stepConfig = [
-    { id: 'upload', label: 'Upload Resume', icon: Upload },
-    { id: 'polish', label: 'Polish Content', icon: Sparkles },
-    { id: 'match', label: 'Job Matching', icon: Target },
-    { id: 'complete', label: 'Download', icon: Download },
-  ] as const;
-
-  const currentStepNumber = stepConfig.findIndex(step => step.id === currentStep);
+  const StepIndicator = ({ step, label, icon: Icon }: { step: Step, label: string, icon: any }) => (
+    <div className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+      currentStep === step 
+        ? 'bg-[#10B981] text-white' 
+        : currentStep > step
+        ? 'bg-[#10B981]/20 text-[#10B981]'
+        : 'bg-gray-800 text-gray-400'
+    }`}>
+      <Icon className="h-4 w-4" />
+      <span className="text-sm font-medium">{label}</span>
+    </div>
+  )
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-3">
-              <Sparkles className="h-8 w-8 text-white" />
-              <div>
-                <h1 className="text-2xl font-bold">Resume Genie</h1>
-                <p className="text-sm opacity-90">Your personal AI-powered resume assistant</p>
-              </div>
-            </div>
-            <div className="text-sm opacity-90 hidden md:block">
-              No signup required • 100% free
-            </div>
-          </div>
-        </div>
-      </header>
+    <main className="min-h-screen bg-[#0A0A0A] relative overflow-hidden">
+      {/* Decorative Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-2 h-2 rounded-full bg-[#10B981] opacity-20"></div>
+        <div className="absolute top-40 right-20 w-2 h-2 rounded-full bg-[#10B981] opacity-20"></div>
+        <div className="absolute top-60 left-1/4 w-2 h-2 rounded-full bg-[#10B981] opacity-20"></div>
+        <div className="absolute bottom-40 right-1/3 w-2 h-2 rounded-full bg-[#10B981] opacity-20"></div>
+        <div className="absolute top-1/3 right-10 w-2 h-2 rounded-full bg-[#10B981] opacity-20"></div>
+        <div className="absolute bottom-20 left-20 w-2 h-2 rounded-full bg-[#10B981] opacity-20"></div>
+      </div>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        {/* Progress Steps */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-center overflow-x-auto">
-              {stepConfig.map((step, index) => (
-                <div key={step.id} className="flex flex-col items-center min-w-[100px]">
-                  <div className={cn(
-                    "rounded-full p-3",
-                    index <= currentStepNumber ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-500"
-                  )}>
-                    <step.icon className="h-5 w-5" />
-                  </div>
-                  <span className="mt-2 text-sm font-medium text-center">{step.label}</span>
-                </div>
-              ))}
+      <section className="relative w-full py-12 md:py-24 lg:py-32">
+        <div className="container mx-auto px-4 md:px-6 max-w-7xl">
+          {/* Progress Steps */}
+          <div className="flex justify-center mb-12">
+            <div className="flex items-center gap-2 bg-gray-900 p-2 rounded-xl">
+              <StepIndicator step="upload" label="Upload" icon={UploadCloud} />
+              <div className="h-6 w-px bg-gray-600 mx-2"></div>
+              <StepIndicator step="polish" label="Polish" icon={Sparkles} />
+              <div className="h-6 w-px bg-gray-600 mx-2"></div>
+              <StepIndicator step="preview" label="Preview" icon={FileText} />
+              <div className="h-6 w-px bg-gray-600 mx-2"></div>
+              <StepIndicator step="job_match" label="Job Match" icon={Target} />
+              <div className="h-6 w-px bg-gray-600 mx-2"></div>
+              <StepIndicator step="download" label="Download" icon={CheckCircle} />
             </div>
-          </CardContent>
-        </Card>
-        
-        {/* Welcome Message */}
-        {currentStep === 'upload' && (
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
-              Supercharge Your Resume in Seconds
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Our AI will analyze your resume, suggest powerful improvements, and help you tailor it to your dream job. No accounts, no fees, just results.
-            </p>
           </div>
-        )}
 
-        {/* Step Content */}
-        <div className="bg-white p-8 rounded-xl shadow-md min-h-[400px] transition-all duration-300 hover:shadow-lg">
-          {currentStep === 'upload' && (
-            <FileUpload
-              onUploadSuccess={handleUploadSuccess}
-              isLoading={isLoading}
-              setIsLoading={setIsLoading}
-            />
-          )}
+          <div className="flex flex-col gap-12 lg:gap-16 items-center">
+            
+            {/* Hero Content - Only shown during upload and polish steps */}
+            {['upload', 'polish'].includes(currentStep) && (
+              <div className="flex flex-col justify-center space-y-8 w-full max-w-4xl">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 self-start">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#10B981]/20 border border-[#10B981]/30">
+                  <Sparkles className="w-3.5 h-3.5 text-[#10B981]" />
+                  <span className="text-xs font-semibold text-[#10B981] uppercase tracking-wide">AI-Powered</span>
+                </div>
+              </div>
 
-          {currentStep === 'polish' && uploadData && (
-            <ResumePreview
-              originalText={uploadData.full_text}
-              polishedContent={polishedContent}
-              onPolish={handlePolish}
-              onNext={handleNextToMatching}
-              isLoading={isLoading}
-              setPolishedContent={setPolishedContent}
-            />
-          )}
-
-          {currentStep === 'match' && polishedContent && (
-            <JobMatcher
-              resumeContent={polishedContent}
-              onNext={handleComplete}
-            />
-          )}
-
-          {currentStep === 'complete' && polishedContent && (
-            <div className="text-center space-y-8">
-              <div className="bg-green-50 rounded-xl p-8 border border-green-200 transition-all duration-300 hover:shadow-md">
-                <Award className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                  Your Resume is Ready to Shine!
-                </h2>
-                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-                  You've successfully enhanced your resume. Download the final version and start applying with confidence.
+              {/* Main Heading */}
+              <div className="space-y-4">
+                <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl xl:text-6xl leading-tight">
+                  Make Your Resume Standout
+                </h1>
+                <p className="text-lg text-[#A3A3A3] md:text-xl max-w-[600px] leading-relaxed">
+                  Our intelligent ai-powered Genie Magically fix your Resume in one click. Get started for free!
                 </p>
-                <div className="flex justify-center items-center space-x-4">
-                  <button
-                    onClick={async () => {
-                      try {
-                        if (!polishedContent) {
-                          alert('No resume content available for download.')
-                          return
-                        }
-                        const pdfBlob = await apiClient.generatePDF(polishedContent)
-                        const url = URL.createObjectURL(pdfBlob)
-                        const a = document.createElement('a')
-                        a.href = url
-                        // Clean filename - replace spaces with underscores and remove special characters
-                        const cleanName = polishedContent.contact_info.name
-                          .replace(/[^a-zA-Z0-9\s]/g, '')
-                          .replace(/\s+/g, '_')
-                          .toLowerCase()
-                        a.download = `${cleanName}_resume_final.pdf`
-                        document.body.appendChild(a)
-                        a.click()
-                        document.body.removeChild(a)
-                        URL.revokeObjectURL(url)
-                      } catch (error) {
-                        console.error('Download failed:', error)
-                        alert('Failed to download PDF. Please try again.')
-                      }
-                    }}
-                    className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105"
-                  >
-                    <Download className="h-5 w-5 mr-2" />
-                    Download Polished Resume
-                  </button>
-                  <button
-                    onClick={resetFlow}
-                    className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105"
+              </div>
+
+              {/* Step-specific guidance */}
+              {currentStep === 'upload' && (
+                <div className="bg-[#10B981]/10 border border-[#10B981]/30 rounded-lg p-4">
+                  <p className="text-sm text-[#10B981]">
+                    📝 Upload your resume to get started. We support PDF, DOCX, and TXT files.
+                  </p>
+                </div>
+              )}
+
+              {currentStep === 'polish' && (
+                <div className="bg-[#10B981]/10 border border-[#10B981]/30 rounded-lg p-4">
+                  <p className="text-sm text-[#10B981]">
+                    ✨ Your resume has been uploaded! Click "Polish with AI" to enhance it.
+                  </p>
+                </div>
+              )}
+
+              {currentStep === 'preview' && (
+                <div className="bg-[#10B981]/10 border border-[#10B981]/30 rounded-lg p-4">
+                  <p className="text-sm text-[#10B981]">
+                    👀 Review your polished resume. You can edit any section before proceeding.
+                  </p>
+                </div>
+              )}
+
+              {currentStep === 'job_match' && (
+                <div className="bg-[#10B981]/10 border border-[#10B981]/30 rounded-lg p-4">
+                  <p className="text-sm text-[#10B981]">
+                    🎯 Analyze how well your resume matches specific job descriptions.
+                  </p>
+                </div>
+              )}
+
+              {/* Navigation Buttons */}
+              {currentStep !== 'upload' && (
+                <div className="flex gap-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleBackToUpload}
+                    className="border-2 border-[#10B981] text-[#10B981] hover:bg-[#10B981]/10"
                   >
                     Start Over
-                  </button>
+                  </Button>
+                  {currentStep === 'polish' && (
+                    <Button 
+                      onClick={handlePolishResume}
+                      disabled={isProcessing}
+                      className="bg-[#10B981] hover:bg-[#059669] text-white"
+                    >
+                      {isProcessing ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Polishing...</>
+                      ) : (
+                        <><Sparkles className="mr-2 h-4 w-4" /> Polish with AI</>
+                      )}
+                    </Button>
+                  )}
                 </div>
-              </div>
-
-              {/* Summary */}
-              <div className="bg-gray-50 rounded-xl border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Summary of Enhancements</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-                  <div className="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm transition-all duration-300 hover:shadow-md">
-                    <FileText className="h-8 w-8 text-blue-500 mb-2" />
-                    <span className="font-semibold text-gray-800">Resume Uploaded</span>
-                    <span className="text-sm text-green-600 font-medium">✓ Completed</span>
-                  </div>
-                  <div className="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm">
-                    <Sparkles className="h-8 w-8 text-yellow-500 mb-2" />
-                    <span className="font-semibold text-gray-800">AI Enhancement</span>
-                    <span className="text-sm text-green-600 font-medium">✓ Completed</span>
-                  </div>
-                  <div className="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm">
-                    <Briefcase className="h-8 w-8 text-purple-500 mb-2" />
-                    <span className="font-semibold text-gray-800">Job Analysis</span>
-                    <span className="text-sm text-green-600 font-medium">✓ Completed</span>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
-          )}
-        </div>
-      </main>
+            )}
 
-      {/* Footer */}
-      <footer className="bg-white mt-16 border-t py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-sm text-gray-500">
-            <p className="mb-1">
-              &copy; {new Date().getFullYear()} Resume Genie. All rights reserved.
-            </p>
-            <p>
-              Your data is processed in-memory and never stored. Your privacy is our priority.
-            </p>
+            {/* Main Content Card - Always full width */}
+            <Card className="border-2 border-dashed border-[#10B981]/50 bg-[#121212] shadow-2xl rounded-2xl overflow-hidden w-full max-w-4xl">
+              <CardContent className="p-8">
+                {error && (
+                  <div className="mb-6 p-4 rounded-lg bg-[#EF4444]/10 border border-[#EF4444]/30">
+                    <p className="text-sm text-[#EF4444]">{error}</p>
+                  </div>
+                )}
+
+                {currentStep === 'upload' && (
+                  <div className="flex min-h-[400px] flex-col items-center justify-center gap-6 text-center">
+                    <input
+                      type="file"
+                      id="file-upload-input"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) handleFileUpload(file)
+                      }}
+                      accept=".txt,.pdf,.docx"
+                      disabled={isUploading}
+                    />
+
+                    {!isUploading && (
+                      <div
+                        className="flex h-full w-full cursor-pointer flex-col items-center justify-center gap-6 hover:bg-[#1A1A1A] rounded-xl transition-colors p-8"
+                        onClick={() => document.getElementById('file-upload-input')?.click()}
+                      >
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-[#10B981]/10 blur-xl rounded-full"></div>
+                          <UploadCloud className="relative h-20 w-20 text-[#10B981] stroke-[1.5]" />
+                        </div>
+
+                        <div className="space-y-3">
+                          <h3 className="text-2xl font-semibold text-white">
+                            Drop your resume here
+                          </h3>
+                          
+                          <div className="flex items-center gap-4 py-2">
+                            <div className="h-px w-16 bg-[#262626]"></div>
+                            <span className="text-sm text-[#737373] font-medium">or</span>
+                            <div className="h-px w-16 bg-[#262626]"></div>
+                          </div>
+
+                          <div className="pt-2">
+                            <div className="inline-flex items-center justify-center px-8 py-3 border-2 border-[#10B981] text-white font-medium rounded-lg hover:bg-[#10B981]/10 transition-colors">
+                              Browse Files
+                            </div>
+                          </div>
+                        </div>
+
+                        <p className="text-sm text-[#737373]">
+                          PDF, DOCX, TXT • Maximum 10MB
+                        </p>
+                      </div>
+                    )}
+
+                    {isUploading && (
+                      <div className="w-full space-y-4">
+                        <Loader2 className="h-12 w-12 text-[#10B981] animate-spin mx-auto" />
+                        <p className="text-base font-medium text-white">
+                          {uploadProgress < 100 ? `Uploading your resume... (${uploadProgress}%)` : 'Upload Complete!'}
+                        </p>
+                        <Progress value={uploadProgress} className="w-full h-2" />
+                        {uploadProgress < 100 && <p className="text-sm text-[#737373]">Processing...</p>}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {currentStep === 'polish' && (
+                  <div className="flex min-h-[400px] flex-col items-center justify-center gap-6 text-center">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-[#10B981]/20 blur-xl rounded-full"></div>
+                      <CheckCircle className="relative h-16 w-16 text-[#10B981]" />
+                    </div>
+
+                    <p className="text-xl font-semibold text-white">Upload Successful!</p>
+
+                    <div className="flex w-full max-w-md items-center gap-4 rounded-xl border border-[#262626] bg-[#0A0A0A] p-4">
+                      <div className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-lg bg-[#10B981]/10">
+                        <FileText className="h-6 w-6 text-[#10B981]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-white truncate text-sm">
+                          {uploadedFile?.name}
+                        </p>
+                        <p className="text-xs text-[#737373] mt-1">
+                          {((uploadedFile?.size || 0) / (1024 * 1024)).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="w-full max-w-md flex flex-col gap-3 pt-2">
+                      <Button
+                        onClick={handlePolishResume}
+                        disabled={isProcessing}
+                        size="lg"
+                        className="w-full bg-[#10B981] hover:bg-[#059669] text-white font-medium h-12 rounded-lg"
+                      >
+                        {isProcessing ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Polishing...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            Polish with AI
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {currentStep === 'preview' && polishedContent && (
+                  <ResumePreview
+                    originalText={extractedText}
+                    polishedContent={polishedContent}
+                    onPolish={handlePolishResume}
+                    onNext={handleNextToJobMatch}
+                    isLoading={isProcessing}
+                    setPolishedContent={setPolishedContent}
+                  />
+                )}
+
+                {currentStep === 'job_match' && polishedContent && (
+                  <JobMatcher
+                    resumeContent={polishedContent}
+                    onNext={() => setCurrentStep('download')}
+                  />
+                )}
+
+                {currentStep === 'download' && (
+                  <div className="flex min-h-[400px] flex-col items-center justify-center gap-6 text-center">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-[#10B981]/20 blur-xl rounded-full"></div>
+                      <CheckCircle className="relative h-16 w-16 text-[#10B981]" />
+                    </div>
+
+                    <p className="text-xl font-semibold text-white">Process Complete!</p>
+                    <p className="text-[#A3A3A3]">Your resume has been enhanced and is ready for download.</p>
+
+                    <Button
+                      onClick={handleBackToUpload}
+                      className="bg-[#10B981] hover:bg-[#059669] text-white"
+                    >
+                      Start Over with New Resume
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
-      </footer>
-    </div>
+      </section>
+    </main>
   )
 }

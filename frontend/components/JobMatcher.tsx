@@ -1,11 +1,10 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Target, TrendingUp, AlertTriangle, CheckCircle, Download, ArrowRight, FileText, Briefcase, BookOpen } from 'lucide-react'
+import { Target, TrendingUp, AlertTriangle, CheckCircle, Download, ArrowRight, FileText, Briefcase, BookOpen, Loader2 } from 'lucide-react'
 import { Button } from './ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { apiClient, ResumeData, JobAnalysis } from '@/lib/api'
-import Spinner from './ui/spinner'
 
 interface JobMatcherProps {
   resumeContent: ResumeData
@@ -61,15 +60,15 @@ export default function JobMatcher({ resumeContent, onNext }: JobMatcherProps) {
   }
 
   const getScoreRingColor = (score: number) => {
-    if (score >= 80) return 'stroke-green-500'
-    if (score >= 60) return 'stroke-yellow-500'
-    return 'stroke-red-500'
+    if (score >= 80) return 'stroke-success'
+    if (score >= 60) return 'stroke-warning'
+    return 'stroke-destructive'
   }
 
   const getScoreTextColor = (score: number) => {
-    if (score >= 80) return 'text-green-600'
-    if (score >= 60) return 'text-yellow-600'
-    return 'text-red-600'
+    if (score >= 80) return 'text-success'
+    if (score >= 60) return 'text-warning'
+    return 'text-destructive'
   }
 
   const AnalysisResultCard = ({ icon, title, children, colorClass }: {
@@ -93,7 +92,7 @@ export default function JobMatcher({ resumeContent, onNext }: JobMatcherProps) {
         <Card className="sticky top-8">
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Briefcase className="h-6 w-6 mr-3 text-blue-600" />
+              <Briefcase className="h-6 w-6 mr-3 text-primary" />
               Job Description
             </CardTitle>
           </CardHeader>
@@ -102,7 +101,7 @@ export default function JobMatcher({ resumeContent, onNext }: JobMatcherProps) {
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
               placeholder="Paste the job description here to see how your resume stacks up..."
-              className="w-full h-48 p-3 border border-gray-300 rounded-md resize-y focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="w-full h-48 p-3 border rounded-md resize-y focus:ring-2 focus:ring-ring focus:border-transparent transition bg-background text-foreground"
               disabled={isAnalyzing}
             />
             <Button 
@@ -112,13 +111,13 @@ export default function JobMatcher({ resumeContent, onNext }: JobMatcherProps) {
               size="lg"
             >
               {isAnalyzing ? (
-                <><Spinner className="h-5 w-5 mr-2" /> Analyzing...</>
+                <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Analyzing...</>
               ) : (
                 <><Target className="h-5 w-5 mr-2" /> Analyze Match</>
               )}
             </Button>
             {error && (
-              <div className="flex items-center text-sm text-red-600 bg-red-50 p-3 rounded-md">
+              <div className="flex items-center text-sm text-destructive bg-destructive/10 p-3 rounded-md">
                 <AlertTriangle className="h-4 w-4 mr-2" />
                 {error}
               </div>
@@ -129,10 +128,10 @@ export default function JobMatcher({ resumeContent, onNext }: JobMatcherProps) {
         {/* Right Column: Results */}
         <div className="space-y-8">
           {!analysis && !isAnalyzing && (
-            <Card className="flex flex-col items-center justify-center text-center py-16 px-6 bg-gray-50 border-dashed">
-              <Target className="h-16 w-16 text-gray-300" />
-              <h3 className="mt-4 text-xl font-semibold text-gray-800">Match Analysis</h3>
-              <p className="mt-2 text-sm text-gray-500">
+            <Card className="flex flex-col items-center justify-center text-center py-16 px-6 bg-muted/50 border-dashed">
+              <Target className="h-16 w-16 text-muted-foreground" />
+              <h3 className="mt-4 text-xl font-semibold text-foreground">Match Analysis</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
                 Your results will appear here once you analyze a job description.
               </p>
             </Card>
@@ -147,7 +146,7 @@ export default function JobMatcher({ resumeContent, onNext }: JobMatcherProps) {
                 <CardContent>
                   <div className="relative inline-flex items-center justify-center">
                     <svg className="w-32 h-32">
-                      <circle className="stroke-current text-gray-200" strokeWidth="8" fill="transparent" r="54" cx="64" cy="64" />
+                      <circle className="stroke-current text-muted" strokeWidth="8" fill="transparent" r="54" cx="64" cy="64" />
                       <circle 
                         className={`stroke-current ${getScoreRingColor(analysis.match_score)}`}
                         strokeWidth="8"
@@ -164,17 +163,17 @@ export default function JobMatcher({ resumeContent, onNext }: JobMatcherProps) {
                       {analysis.match_score}<span className="text-2xl">%</span>
                     </span>
                   </div>
-                  <p className="mt-4 text-base text-gray-600 max-w-md mx-auto">{analysis.overall_assessment}</p>
+                  <p className="mt-4 text-base text-muted-foreground max-w-md mx-auto">{analysis.overall_assessment}</p>
                 </CardContent>
               </Card>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {analysis.strengths && analysis.strengths.length > 0 && (
-                  <AnalysisResultCard icon={<CheckCircle className="h-5 w-5 text-green-500" />} title="Strengths" colorClass="text-green-700">
-                    <ul className="space-y-2 text-sm text-gray-700">
+                  <AnalysisResultCard icon={<CheckCircle className="h-5 w-5 text-success" />} title="Strengths" colorClass="text-success">
+                    <ul className="space-y-2 text-sm text-muted-foreground">
                       {analysis.strengths.map((strength, index) => (
                         <li key={index} className="flex items-start">
-                          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                          <CheckCircle className="h-4 w-4 text-success mt-0.5 mr-2 flex-shrink-0" />
                           <span>{strength}</span>
                         </li>
                       ))}
@@ -183,11 +182,11 @@ export default function JobMatcher({ resumeContent, onNext }: JobMatcherProps) {
                 )}
 
                 {analysis.concerns && analysis.concerns.length > 0 && (
-                  <AnalysisResultCard icon={<AlertTriangle className="h-5 w-5 text-red-500" />} title="Potential Concerns" colorClass="text-red-700">
-                    <ul className="space-y-2 text-sm text-gray-700">
+                  <AnalysisResultCard icon={<AlertTriangle className="h-5 w-5 text-destructive" />} title="Potential Concerns" colorClass="text-destructive">
+                    <ul className="space-y-2 text-sm text-muted-foreground">
                       {analysis.concerns.map((concern, index) => (
                         <li key={index} className="flex items-start">
-                          <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
+                          <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 mr-2 flex-shrink-0" />
                           <span>{concern}</span>
                         </li>
                       ))}
@@ -197,10 +196,10 @@ export default function JobMatcher({ resumeContent, onNext }: JobMatcherProps) {
               </div>
 
               {analysis.missing_keywords && analysis.missing_keywords.length > 0 && (
-                <AnalysisResultCard icon={<FileText className="h-5 w-5 text-yellow-500" />} title="Missing Keywords" colorClass="text-yellow-700">
+                <AnalysisResultCard icon={<FileText className="h-5 w-5 text-warning" />} title="Missing Keywords" colorClass="text-warning">
                   <div className="flex flex-wrap gap-2">
                     {analysis.missing_keywords.slice(0, 15).map((keyword, index) => (
-                      <span key={index} className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                      <span key={index} className="bg-warning/10 text-warning text-xs font-medium px-2.5 py-0.5 rounded-full">
                         {keyword}
                       </span>
                     ))}
@@ -209,11 +208,11 @@ export default function JobMatcher({ resumeContent, onNext }: JobMatcherProps) {
               )}
 
               {analysis.knowledge_gaps && analysis.knowledge_gaps.length > 0 && (
-                <AnalysisResultCard icon={<BookOpen className="h-5 w-5 text-purple-500" />} title="Knowledge Gaps" colorClass="text-purple-700">
-                  <ul className="space-y-2 text-sm text-gray-700">
+                <AnalysisResultCard icon={<BookOpen className="h-5 w-5 text-info" />} title="Knowledge Gaps" colorClass="text-info">
+                  <ul className="space-y-2 text-sm text-muted-foreground">
                     {analysis.knowledge_gaps.map((gap, index) => (
                       <li key={index} className="flex items-start">
-                        <BookOpen className="h-4 w-4 text-purple-500 mt-0.5 mr-2 flex-shrink-0" />
+                        <BookOpen className="h-4 w-4 text-info mt-0.5 mr-2 flex-shrink-0" />
                         <span>{gap}</span>
                       </li>
                     ))}
@@ -222,11 +221,11 @@ export default function JobMatcher({ resumeContent, onNext }: JobMatcherProps) {
               )}
 
               {analysis.suggestions && analysis.suggestions.length > 0 && (
-                <AnalysisResultCard icon={<TrendingUp className="h-5 w-5 text-blue-500" />} title="Improvement Suggestions" colorClass="text-blue-700">
-                  <ul className="space-y-3 text-sm text-gray-700">
+                <AnalysisResultCard icon={<TrendingUp className="h-5 w-5 text-primary" />} title="Improvement Suggestions" colorClass="text-primary">
+                  <ul className="space-y-3 text-sm text-muted-foreground">
                     {analysis.suggestions.map((suggestion, index) => (
                       <li key={index} className="flex items-start">
-                        <ArrowRight className="h-4 w-4 text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
+                        <ArrowRight className="h-4 w-4 text-primary mt-0.5 mr-2 flex-shrink-0" />
                         <span>{suggestion}</span>
                       </li>
                     ))}

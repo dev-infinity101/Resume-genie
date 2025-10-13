@@ -118,4 +118,8 @@ celerybeat-schedule
 .dmypy.json
 dmypy.json
 
+#reference files and unlisted docs
 Development-checklist.md
+.vercel
+UI-design.md
+vercel.json

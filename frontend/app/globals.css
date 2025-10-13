@@ -4,47 +4,128 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
+    /* CSS Variables for shadcn/ui compatibility */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 160 79% 35%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 160 84% 39%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 160 84% 39%;
+    --radius: 0.75rem;
+  }
+  
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-[#0A0A0A];
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-[#262626] rounded;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-[#404040];
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+  /* Focus States */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-[#10B981] ring-offset-2 ring-offset-[#0A0A0A];
+  }
+
+  /* Selection */
+  ::selection {
+    @apply bg-[#10B981]/30 text-white;
+  }
+}
+
+@layer components {
+  /* Resume-Genie Button Styles */
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-8 py-3 text-base font-medium text-white bg-[#10B981] hover:bg-[#059669] rounded-lg transition-colors;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-8 py-3 text-base font-medium text-[#10B981] bg-transparent border-2 border-[#10B981] hover:bg-[#10B981]/10 rounded-lg transition-colors;
+  }
+
+  /* Card Styles */
+  .card-elevated {
+    @apply bg-[#121212] border border-[#262626] rounded-xl shadow-lg;
+  }
+
+  .card-accent {
+    @apply bg-[#121212] border-2 border-[#10B981] rounded-xl shadow-lg;
+  }
+
+  /* Badge Styles */
+  .badge-success {
+    @apply inline-flex items-center px-3 py-1 rounded-md bg-[#10B981]/20 text-[#10B981] text-xs font-semibold uppercase tracking-wide;
+  }
+
+  .badge-error {
+    @apply inline-flex items-center px-3 py-1 rounded-md bg-[#EF4444]/20 text-[#EF4444] text-xs font-semibold uppercase tracking-wide;
+  }
+
+  .badge-warning {
+    @apply inline-flex items-center px-3 py-1 rounded-md bg-[#F59E0B]/20 text-[#F59E0B] text-xs font-semibold uppercase tracking-wide;
+  }
+
+  /* Input Styles */
+  .input-primary {
+    @apply w-full px-4 py-3 bg-[#0A0A0A] border border-[#262626] rounded-lg text-white placeholder:text-[#737373] focus:border-[#10B981] focus:ring-1 focus:ring-[#10B981] transition-colors;
+  }
+
+  /* Text Styles */
+  .text-muted {
+    @apply text-[#737373];
+  }
+
+  .text-secondary {
+    @apply text-[#A3A3A3];
+  }
+}
+
+@layer utilities {
+  /* Gradient Text */
+  .text-gradient-green {
+    @apply bg-gradient-to-r from-[#10B981] to-[#00FF88] bg-clip-text text-transparent;
+  }
+
+  /* Glow Effects */
+  .glow-green {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+  }
+
+  .glow-green-sm {
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
   }
 }
