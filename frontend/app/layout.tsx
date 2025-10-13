@@ -2,11 +2,14 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { cn } from '@/lib/utils'
 import { Sparkles } from 'lucide-react'
+import Favicon from './favicon-logo.png';
 
 export const metadata: Metadata = {
   title: 'Resume Genie - AI-Powered Resume Builder',
   description: 'Transform your resume in minutes with AI. Create professional, ATS-optimized resumes that get you hired.',
-  
+  icons: {
+    icon: Favicon.src,
+  },
 };
 
 export default function RootLayout({
