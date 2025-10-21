@@ -1,0 +1,24 @@
+web: uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+
+### **Step 3: Create `runtime.txt`**
+
+Create `backend/runtime.txt`:
+```
+python-3.11.9
+```
+
+This tells Railway which Python version to use.
+
+### **Step 4: For WeasyPrint System Dependencies**
+
+Create `backend/aptfile` (lowercase, no extension):
+```
+libcairo2-dev
+libpango-1.0-0
+libpangocairo-1.0-0
+libgdk-pixbuf2.0-0
+libffi-dev
+shared-mime-info
+gcc
+g++
