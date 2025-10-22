@@ -9,28 +9,3 @@ jinja2==3.1.2
 pydantic==2.5.0
 python-dotenv==1.0.0
 python-magic==0.4.27
-```
-
-**Key change:** `PyMuPDF==1.23.8` → `PyMuPDF-binary==1.23.8`
-
-The `-binary` version includes pre-compiled libraries and doesn't need system dependencies.
-
----
-
-## **Solution 2: Install System Dependencies**
-
-If you want to keep using regular PyMuPDF, add the required system packages.
-
-### **Create `backend/aptfile`:**
-```
-mupdf
-mupdf-tools
-libmupdf-dev
-libfreetype6-dev
-libharfbuzz-dev
-libjpeg-dev
-libopenjp2-7-dev
-libjbig2dec0-dev
-gcc
-g++
-make
