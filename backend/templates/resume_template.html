@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ resume.contact_info.name or 'Resume' }}</title>
     <style>
         @page {
@@ -13,14 +12,13 @@
         * {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
         
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, sans-serif;
             font-size: 11pt;
             line-height: 1.4;
-            color: #333;
+            color: #333333;
         }
         
         .header {
@@ -39,11 +37,8 @@
         
         .contact-info {
             font-size: 10pt;
-            color: #666;
-        }
-        
-        .contact-info span {
-            margin: 0 8px;
+            color: #666666;
+            text-align: center;
         }
         
         .section {
@@ -55,18 +50,22 @@
             font-weight: bold;
             color: #1e40af;
             text-transform: uppercase;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid #cccccc;
             padding-bottom: 3px;
             margin-bottom: 12px;
         }
         
         .summary {
             font-style: italic;
-            color: #555;
+            color: #555555;
             margin-bottom: 15px;
         }
         
-        .experience-item, .education-item {
+        .experience-item {
+            margin-bottom: 15px;
+        }
+        
+        .education-item {
             margin-bottom: 15px;
         }
         
@@ -77,7 +76,7 @@
         }
         
         .company {
-            font-weight: 600;
+            font-weight: bold;
             color: #374151;
         }
         
@@ -91,29 +90,37 @@
             float: right;
         }
         
+        .item-header {
+            margin-bottom: 3px;
+        }
+        
+        .item-subheader {
+            margin-bottom: 6px;
+        }
+        
         .achievements {
             margin-top: 6px;
-            margin-left: 15px;
+            margin-left: 20px;
+            padding-left: 0;
         }
         
         .achievements li {
-            margin-bottom: 3px;
+            margin-bottom: 4px;
             color: #374151;
+            list-style-type: disc;
         }
         
-        .skills-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
+        .skills-container {
             margin-top: 8px;
         }
         
         .skill-item {
+            display: inline-block;
             background-color: #f3f4f6;
             padding: 6px 12px;
-            border-radius: 4px;
+            margin: 4px 4px 4px 0;
+            border: 1px solid #e5e7eb;
             font-size: 10pt;
-            text-align: center;
         }
         
         .certifications {
@@ -124,8 +131,8 @@
             background-color: #dbeafe;
             display: inline-block;
             padding: 4px 8px;
-            margin: 2px 4px;
-            border-radius: 3px;
+            margin: 2px 4px 2px 0;
+            border: 1px solid #bfdbfe;
             font-size: 10pt;
         }
         
@@ -138,10 +145,32 @@
             padding-top: 10px;
         }
         
-        .clearfix::after {
-            content: "";
-            display: table;
+        .clear {
             clear: both;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .info-table {
+            margin-bottom: 3px;
+        }
+        
+        .info-table td {
+            padding: 0;
+            vertical-align: top;
+        }
+        
+        .info-table .left {
+            width: 70%;
+            text-align: left;
+        }
+        
+        .info-table .right {
+            width: 30%;
+            text-align: right;
         }
     </style>
 </head>
@@ -151,19 +180,19 @@
         <div class="name">{{ resume.contact_info.name or 'Your Name' }}</div>
         <div class="contact-info">
             {% if resume.contact_info.email %}
-                <span>{{ resume.contact_info.email }}</span>
+                {{ resume.contact_info.email }}
             {% endif %}
             {% if resume.contact_info.phone %}
-                <span>•</span>
-                <span>{{ resume.contact_info.phone }}</span>
+                {% if resume.contact_info.email %} • {% endif %}
+                {{ resume.contact_info.phone }}
             {% endif %}
             {% if resume.contact_info.location %}
-                <span>•</span>
-                <span>{{ resume.contact_info.location }}</span>
+                {% if resume.contact_info.email or resume.contact_info.phone %} • {% endif %}
+                {{ resume.contact_info.location }}
             {% endif %}
             {% if resume.contact_info.linkedin %}
-                <span>•</span>
-                <span>{{ resume.contact_info.linkedin }}</span>
+                {% if resume.contact_info.email or resume.contact_info.phone or resume.contact_info.location %} • {% endif %}
+                {{ resume.contact_info.linkedin }}
             {% endif %}
         </div>
     </div>
@@ -182,18 +211,35 @@
         <div class="section-title">Professional Experience</div>
         {% for exp in resume.experience %}
         <div class="experience-item">
-            <div class="clearfix">
-                <div class="job-title">{{ exp.title or 'Position Title' }}</div>
-                {% if exp.location %}
-                <div class="location">{{ exp.location }}</div>
-                {% endif %}
-            </div>
-            <div class="clearfix">
-                <div class="company">{{ exp.company or 'Company Name' }}</div>
-                {% if exp.duration %}
-                <div class="duration" style="float: right;">{{ exp.duration }}</div>
-                {% endif %}
-            </div>
+            <!-- Job Title and Location -->
+            <table class="info-table">
+                <tr>
+                    <td class="left">
+                        <div class="job-title">{{ exp.title or 'Position Title' }}</div>
+                    </td>
+                    <td class="right">
+                        {% if exp.location %}
+                        <div class="location">{{ exp.location }}</div>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+            
+            <!-- Company and Duration -->
+            <table class="info-table">
+                <tr>
+                    <td class="left">
+                        <div class="company">{{ exp.company or 'Company Name' }}</div>
+                    </td>
+                    <td class="right">
+                        {% if exp.duration %}
+                        <div class="duration">{{ exp.duration }}</div>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+            
+            <!-- Achievements -->
             {% if exp.achievements %}
             <ul class="achievements">
                 {% for achievement in exp.achievements %}
@@ -212,18 +258,34 @@
         <div class="section-title">Education</div>
         {% for edu in resume.education %}
         <div class="education-item">
-            <div class="clearfix">
-                <div class="job-title">{{ edu.degree or 'Degree' }}</div>
-                {% if edu.location %}
-                <div class="location">{{ edu.location }}</div>
-                {% endif %}
-            </div>
-            <div class="clearfix">
-                <div class="company">{{ edu.school or 'School Name' }}</div>
-                {% if edu.graduation %}
-                <div class="duration" style="float: right;">{{ edu.graduation }}</div>
-                {% endif %}
-            </div>
+            <!-- Degree and Location -->
+            <table class="info-table">
+                <tr>
+                    <td class="left">
+                        <div class="job-title">{{ edu.degree or 'Degree' }}</div>
+                    </td>
+                    <td class="right">
+                        {% if edu.location %}
+                        <div class="location">{{ edu.location }}</div>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+            
+            <!-- School and Graduation -->
+            <table class="info-table">
+                <tr>
+                    <td class="left">
+                        <div class="company">{{ edu.school or 'School Name' }}</div>
+                    </td>
+                    <td class="right">
+                        {% if edu.graduation %}
+                        <div class="duration">{{ edu.graduation }}</div>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+            
             {% if edu.details %}
             <div style="margin-top: 4px; color: #6b7280;">{{ edu.details }}</div>
             {% endif %}
@@ -236,9 +298,9 @@
     {% if resume.skills %}
     <div class="section">
         <div class="section-title">Technical Skills</div>
-        <div class="skills-grid">
+        <div class="skills-container">
             {% for skill in resume.skills %}
-            <div class="skill-item">{{ skill }}</div>
+            <span class="skill-item">{{ skill }}</span>
             {% endfor %}
         </div>
     </div>
