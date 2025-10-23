@@ -6,7 +6,7 @@ python-multipart==0.0.6
 google-generativeai==0.3.1
 
 # PDF Processing - Use binary version
-PyMuPDF
+PyMuPDF-binary==1.23.8
 pdfplumber==0.10.3
 
 # PDF Generation - xhtml2pdf
