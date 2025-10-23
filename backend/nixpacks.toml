@@ -1,3 +1,2 @@
 [phases.setup]
-# Add rust (for pydantic-core) and the WeasyPrint Go libraries
-pkgs = ["rust", "pango", "cairo", "glib"]
+pkgs = ["rust"]
