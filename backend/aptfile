@@ -1,3 +1,15 @@
 build-essential
-python3-dev
+cmake
+pkg-config
+libcairo2-dev
+libpango1.0-dev
+libpangocairo-1.0-0
+libgdk-pixbuf2.0-dev
 libffi-dev
+libgirepository1.0-dev
+gir1.2-pango-1.0
+python3-dev
+libxml2-dev
+libxslt1-dev
+zlib1g-dev
+libjpeg-dev
