@@ -10,7 +10,7 @@ PyMuPDF
 pdfplumber==0.10.3
 
 # PDF Generation - xhtml2pdf
-xhtml2pdf
+xhtml2pdf==0.2.11
 
 # Templating
 jinja2==3.1.2
