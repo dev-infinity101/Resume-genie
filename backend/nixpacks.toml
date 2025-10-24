@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["python311", "cmake", "gcc", "pkg-config"]
+nixPkgs = ["python311","rust","pango", "cairo" , "cmake", "gcc", "pkg-config"]
 aptPkgs = [
     "build-essential",
     "cmake",
