@@ -26,4 +26,4 @@ COPY . .
 EXPOSE 8080
 
 # Use shell form to properly expand PORT environment variable
-CMD python -m uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}
+CMD python -m uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
