@@ -1,6 +1,8 @@
 build-essential
 cmake
 pkg-config
+rustc
+cargo
 libcairo2-dev
 libpango1.0-dev
 libpangocairo-1.0-0
