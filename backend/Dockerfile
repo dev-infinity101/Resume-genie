@@ -1,38 +1,29 @@
-FROM python:3.11-slim
+FROM python:3.11
 
-# Install Rust first (needed for pydantic-core)
-RUN apt-get update && apt-get install -y curl && \
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-
+# Install Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-# Install system dependencies with correct package names
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    cmake \
-    pkg-config \
     libcairo2-dev \
     libpango1.0-dev \
-    libgdk-pixbuf-2.0-dev \
+    libgdk-pixbuf2.0-dev \
     libffi-dev \
-    libgirepository-1.0-dev \
-    python3-dev \
-    libxml2-dev \
-    libxslt1-dev \
-    zlib1g-dev \
-    libjpeg-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy and install requirements
+# Install Python packages
 COPY requirements.txt .
-RUN pip install --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy application
 COPY . .
 
+# Expose port
 EXPOSE 8080
 
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}"]
+# Use shell form to properly expand PORT environment variable
+CMD python -m uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}
