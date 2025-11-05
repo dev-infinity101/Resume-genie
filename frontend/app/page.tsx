@@ -39,7 +39,8 @@ export default function HomePage() {
           clearInterval(interval);
         }
       }, 200);
-      
+
+      //next_public_api will be set for backend api hit 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`, {
         method: 'POST',
         body: formData,
