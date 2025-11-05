@@ -40,10 +40,10 @@ export default function HomePage() {
         }
       }, 200);
       
-      const response = await fetch('http://localhost:8000/api/upload', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`, {
         method: 'POST',
         body: formData,
-      })
+    })
       
       clearInterval(interval);
       setUploadProgress(100);
@@ -72,7 +72,7 @@ export default function HomePage() {
     setError(null)
     
     try {
-      const response = await fetch('http://localhost:8000/api/polish', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/polish`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
